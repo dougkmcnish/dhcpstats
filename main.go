@@ -33,19 +33,20 @@ func stats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rbody := "<html><head><title>Subnets</title></head><body>%v Free: %d Active: %d Free Percent: %.0f</body></html>"
+	rbody := "<html><head><title>Subnets</title></head><body>%v Total: %d Active: %d  Free: %d Utilization Percent: %.0f</body></html>"
 
 	if r.Header.Get("Accept") == "text/csv" {
-		rbody = "%v,%d,%d,%.0f"
+		rbody = "%v,%d,%d,%d,%.0f"
 	}
 
 	leases := lcount(ip, ipnet)
-	addresses := ssize(ip, ipnet)
+	addresses := size(ipnet)
 	fmt.Fprintf(w,
 		rbody,
 		ip,
-		leases,
 		addresses,
+		leases,
+		(addresses - leases),
 		pfree(leases, addresses))
 
 }
@@ -54,21 +55,11 @@ func pfree(i, j int) float64 {
 	return float64(i) / float64(j) * 100
 }
 
-func ssize(i net.IP, n *net.IPNet) int {
-	var addrs int
-	for i = i.Mask(n.Mask); n.Contains(i); inc(i) {
-		addrs++
-	}
-	return addrs - 3
-}
-
-func inc(i net.IP) {
-	for j := len(i) - 1; j >= 0; j-- {
-		i[j]++
-		if i[j] > 0 {
-			break
-		}
-	}
+func size(n *net.IPNet) int {
+	mask, bits := n.Mask.Size()
+	netmask := 0xffffffff << uint32(bits - mask) 
+	host := 0xffffffff &^ netmask 
+	return int(host) 
 }
 
 func lcount(i net.IP, n *net.IPNet) int {
