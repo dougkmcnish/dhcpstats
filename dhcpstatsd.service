@@ -1,0 +1,16 @@
+# Systemd unit file for dhcpstatsd
+
+
+[Unit]
+Description=DHCP Stats collector
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/dhcpstatsd
+User=dhcpstatsd
+Group=dhcpstatsd
+
+
+[Install]
+WantedBy=multi-user.target
