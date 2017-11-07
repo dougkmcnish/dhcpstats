@@ -1,3 +1,2 @@
 dhcpd.leases
-dhcpstats
-dhcpstats.*
+dhcpstats*
