@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -33,14 +34,22 @@ func stats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	f, err := os.Open(*lf)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
 	rbody := "<html><head><title>Subnets</title></head><body>%v Total: %d Active: %d  Free: %d Utilization Percent: %.0f</body></html>"
 
 	if r.Header.Get("Accept") == "text/csv" {
 		rbody = "%v,%d,%d,%d,%.0f"
 	}
 
-	leases := lcount(ip, ipnet)
-	addresses := size(ipnet)
+	leases := actCount(f, ip, ipnet)
+	addresses := numHosts(ipnet)
 	fmt.Fprintf(w,
 		rbody,
 		ip,
@@ -55,21 +64,14 @@ func pfree(i, j int) float64 {
 	return float64(i) / float64(j) * 100
 }
 
-func size(n *net.IPNet) int {
+func numHosts(n *net.IPNet) int {
 	mask, bits := n.Mask.Size()
-	netmask := 0xffffffff << uint32(bits - mask) 
-	host := 0xffffffff &^ netmask 
-	return int(host) 
+	netmask := 0xffffffff << uint32(bits-mask)
+	host := 0xffffffff &^ netmask
+	return int(host - 1)
 }
 
-func lcount(i net.IP, n *net.IPNet) int {
-	f, err := os.Open(*lf)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer f.Close()
+func actCount(f io.Reader, i net.IP, n *net.IPNet) int {
 
 	r := bufio.NewScanner(f)
 	addrs := make(map[string]bool)
