@@ -100,7 +100,7 @@ func TestLfree(t *testing.T) {
 	}
 
 	if lfree(nextString) {
-		t.Errorf("%v should be faulse, got %v", nextString, lfree(nextString))
+		t.Errorf("%v should be false, got %v", nextString, lfree(nextString))
 	}
 }
 
