@@ -74,7 +74,7 @@ func numHosts(n *net.IPNet) int {
 func actCount(f io.Reader, i net.IP, n *net.IPNet) int {
 
 	r := bufio.NewScanner(f)
-	addrs := make(map[string]bool)
+	active := make(map[string]bool)
 
 	var count int
 	for r.Scan() {
@@ -92,10 +92,10 @@ func actCount(f io.Reader, i net.IP, n *net.IPNet) int {
 
 					line := r.Text()
 					if lact(line) {
-						addrs[l] = true
+						active[l] = true
 						break
 					} else if lfree(line) {
-						addrs[l] = false
+						active[l] = false
 						break
 					}
 
@@ -109,8 +109,8 @@ func actCount(f io.Reader, i net.IP, n *net.IPNet) int {
 		log.Printf("File scanner error: %v", err)
 	}
 
-	for k := range addrs {
-		if addrs[k] {
+	for k := range active {
+		if active[k] {
 			count++
 		}
 	}
